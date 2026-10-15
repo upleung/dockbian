@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # 2. 动态下载对应架构的 ttyd 和 Debian Rootfs，并将其解压
-# 这部分等同于 linuxserver base-images 的核心逻辑
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         TTYD_URL="https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64" && \
@@ -25,20 +24,18 @@ RUN ARCH=$(uname -m) && \
     tar -xJf /rootfs.tar.xz -C /debian-rootfs --exclude='./dev/*' || true && \
     rm /rootfs.tar.xz
 
-# 3. 创建普通用户以满足 blitz.cloud 无 root 运行的安全要求
-# 我们在这个普通用户下运行容器，用 proot 来“欺骗”系统
-RUN useradd -m -u 1000 blitzuser && \
-    chown -R blitzuser:blitzuser /debian-rootfs
+# 3. 创建普通用户以满足无 root 运行的安全要求
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /debian-rootfs
 
-USER blitzuser
-WORKDIR /home/blitzuser
+USER appuser
+WORKDIR /home/appuser
 
-# 4. 配置 Web 端口和密码变量
-# blitz.cloud 通常会自动注入 PORT 变量，默认使用 8080
+# 4. 配置 Web 端口和默认密码变量
 ENV PORT=8080
+ENV WEB_USERNAME=admin
+ENV WEB_PASSWORD=dockbian123
 EXPOSE 8080
 
-# 5. 核心启动命令：通过 ttyd 启动 Web 终端，终端内部运行 proot
-# -c admin:blitzroot 用于设置网页密码，防止被全网陌生人扫描滥用
-# proot -S /debian-rootfs (绑定独立文件系统) -0 (模拟 root UID) -w /root (设定工作目录)
-CMD ["sh", "-c", "/usr/local/bin/ttyd -p ${PORT} -c admin:${WEB_PASSWORD:-blitzroot} -W proot -S /debian-rootfs -0 -w /root /bin/bash"]
+# 5. 核心启动命令：通过 ttyd 启动 Web 终端，终端内部运行 proot 模拟 root 权限
+CMD ["sh", "-c", "/usr/local/bin/ttyd -p ${PORT} -c ${WEB_USERNAME}:${WEB_PASSWORD} -W proot -S /debian-rootfs -0 -w /root /bin/bash"]

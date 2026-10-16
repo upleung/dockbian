@@ -1,4 +1,4 @@
-name: Build and Push Dockbian Image bookworm
+name: Build and Push Dockbian Image bookworm-latest
 
 on:
   push:

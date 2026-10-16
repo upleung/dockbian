@@ -1,4 +1,4 @@
-name: Build and Push Dockbian Image
+name: Build and Push Dockbian Image bookworm
 
 on:
   push:

@@ -2,11 +2,11 @@ name: Build and Push Dockbian Image bookworm-slim
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "bookworm-slim", "slim", "main", "master" ]
   workflow_dispatch: # 允许在 GitHub 网页端手动触发工作流
 
 env:
-  # 镜像名称，将生成如 username/dockbian:latest
+  # 镜像名称，将生成如 username/dockbian:slim
   IMAGE_NAME: dockbian
 
 jobs:
@@ -48,9 +48,11 @@ jobs:
           images: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
           tags: |
-            type=raw,value=latest
-            type=sha,format=short
+            type=raw,value=slim
+            type=sha,format=short,prefix=slim-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
